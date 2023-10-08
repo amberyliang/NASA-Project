@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Phytoplankton Growth and CO2 Absorption</title>
+  <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+<body>
+  <h1>Phytoplankton Growth and CO2 Absorption</h1>
+
+  <div class="container">
+    <div>
+      <label for="initialPopulation">Initial Phytoplankton Population</label>
+      <input type="number" id="initialPopulation" value="1000">
+    </div>
+
+    <div>
+      <label for="growthRate">Phytoplankton Growth Rate</label>
+      <input type="number" id="growthRate" step="0.01" value="0.05">
+    </div>
+
+    <div>
+      <label for="timePeriod">Time Period (in days)</label>
+      <input type="number" id="timePeriod" value="30">
+    </div>
+
+    <button id="calculateBtn">Calculate CO2 Absorption</button>
+
+    <div id="result"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

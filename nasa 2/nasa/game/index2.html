@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaDefender</title>
+    <style>
+        body {
+            background-image: url('ocean.jpeg'); /* 背景圖像設定為海洋景色 */
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-position: center;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            overflow: hidden; /* 隱藏頁面滾動條 */
+        }
+
+        .player {
+            width: 70px;
+            height: 70px;
+            background-image: url('pe.png'); /* 設置為浮游植物的圖像 */
+            background-size: cover;
+            background-repeat: no-repeat;
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 50%;
+        }
+
+        .obstacle {
+            width: 50px;
+            height: 50px;
+            background-image: url('plastic.png'); /* 使用垃圾图像 */
+            background-size: cover;
+            background-repeat: no-repeat;
+            position: absolute;
+            top: 0;
+            border-radius: 50%;
+            }
+
+        .oxygen {
+            width: 20px;
+            height: 20px;
+            background-color: transparent !important; /* 設置為透明 */
+            border: 2px solid transparent !important; /* 透明邊框 */
+            border-radius: 50%;
+            animation: glow 2s alternate infinite; /* 添加發光效果 */
+        }
+
+        #score {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            color: white;
+        }
+
+        #time-left {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 24px;
+            color: white;
+        }
+
+        #game-over {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        button {
+            font-size: 18px;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+            100% {
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes glow {
+            0% {
+                box-shadow: 0 0 5px rgba(0, 0, 255, 0.7); /* 發光效果初始設置 */
+            }
+            100% {
+                box-shadow: 0 0 20px rgba(88, 88, 212, 0.7); /* 發光效果結束設置 */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="player" id="player"></div>
+    <div id="score">score: 0</div>
+    <div id="time-left">time: 30</div>
+    <div id="game-over">
+        <h2>Game Over</h2>
+        <p><span id="final-score">0</span></p>
+        <button onclick="restartGame()">restart</button>
+    </div>
+
+    <script>
+        const player = document.getElementById('player');
+        const scoreElement = document.getElementById('score');
+        const gameOverElement = document.getElementById('game-over');
+        const finalScoreElement = document.getElementById('final-score');
+        const timeLeftElement = document.getElementById('time-left'); // 新增時間顯示元素
+        let playerX = window.innerWidth / 2 - player.clientWidth / 2;
+        let playerY = window.innerHeight - player.clientHeight - 10; // 初始玩家位置在底部
+        let score = 0;
+        let gameRunning = true;
+        let timeLeft = 30;
+
+        player.style.left = playerX + 'px';
+        player.style.top = playerY + 'px';
+
+        function createObstacle() {
+        if (gameRunning) {
+            const obstacle = document.createElement('div');
+            obstacle.className = 'obstacle';
+            obstacle.style.width = '50px'; // 调整障碍物大小
+            obstacle.style.height = '50px';
+            // 随机选择垃圾图像
+            const randomGarbage = ['apple.png', 'banana.png', 'can.png','plastic.png'];
+            const randomGarbageIndex = Math.floor(Math.random() * randomGarbage.length);
+            obstacle.style.backgroundImage = `url('${randomGarbage[randomGarbageIndex]}')`;
+
+            const randomX = Math.random() * (window.innerWidth - obstacle.clientWidth);
+            obstacle.style.left = randomX + 'px';
+
+            document.body.appendChild(obstacle);
+        }
+    }
+
+
+        function createOxygen() {
+    if (gameRunning) {
+        const oxygen = document.createElement('div');
+        oxygen.className = 'oxygen';
+        oxygen.style.width = '20px';
+        oxygen.style.height = '20px';
+        oxygen.style.backgroundColor = 'blue';
+        oxygen.style.position = 'absolute';
+
+        const randomX = Math.random() * (window.innerWidth - oxygen.clientWidth);
+        const randomY = Math.random() * (window.innerHeight - oxygen.clientHeight);
+
+        const spawnDirection = Math.floor(Math.random() * 4); // 隨機選擇 0、1、2 或 3
+
+        switch (spawnDirection) {
+            case 0: // 從上方出現
+                oxygen.style.top = '-20px';
+                oxygen.style.left = randomX + 'px';
+                break;
+            case 1: // 從右方出現
+                oxygen.style.top = randomY + 'px';
+                oxygen.style.left = window.innerWidth + 'px';
+                break;
+            case 2: // 從下方出現
+                oxygen.style.top = window.innerHeight + 'px';
+                oxygen.style.left = randomX + 'px';
+                break;
+            case 3: // 從左方出現
+                oxygen.style.top = randomY + 'px';
+                oxygen.style.left = '-20px';
+                break;
+            default:
+                break;
+        }
+
+        document.body.appendChild(oxygen);
+    }
+}
+
+
+        function updateObstacles() {
+            const obstacles = document.querySelectorAll('.obstacle');
+
+            obstacles.forEach(obstacle => {
+                if (gameRunning) {
+                    let obstacleY = obstacle.offsetTop;
+                    obstacleY += 1; // 控制障礙物下降速度
+
+                    if (obstacleY > window.innerHeight) {
+                        obstacleY = 0;
+                        const randomX = Math.random() * (window.innerWidth - obstacle.clientWidth);
+                        obstacle.style.left = randomX + 'px';
+                    }
+
+                    obstacle.style.top = obstacleY + 'px';
+
+                    // 檢查碰撞
+                    if (
+                        playerX + player.clientWidth >= obstacle.offsetLeft &&
+                        playerX <= obstacle.offsetLeft + obstacle.clientWidth &&
+                        playerY + player.clientHeight >= obstacle.offsetTop &&
+                        playerY <= obstacle.offsetTop + obstacle.clientHeight
+                    ) {
+                        // 碰到污染物，分數減 1
+                        obstacle.remove();
+                        score--;
+                        scoreElement.textContent = 'score: ' + score;
+                    }
+                }
+            });
+        }
+
+        function updateOxygen() {
+            const oxygens = document.querySelectorAll('.oxygen');
+
+            oxygens.forEach(oxygen => {
+                if (gameRunning) {
+                    let oxygenY = oxygen.offsetTop;
+                    oxygenY += 1; // 控制氧氣泡泡上升速度
+
+                    if (oxygenY < -20) {
+                        oxygen.remove(); // 移除超出螢幕的氧氣泡泡
+                    } else {
+                        oxygen.style.top = oxygenY + 'px';
+
+                        // 檢查與玩家的碰撞
+                        if (
+                            playerX + player.clientWidth >= oxygen.offsetLeft &&
+                            playerX <= oxygen.offsetLeft + oxygen.clientWidth &&
+                            playerY + player.clientHeight >= oxygen.offsetTop &&
+                            playerY <= oxygen.offsetTop + oxygen.clientHeight
+                        ) {
+                            // 玩家碰到氧氣泡泡，得分+1
+                            oxygen.remove();
+                            score++;
+                            scoreElement.textContent = 'score: ' + score;
+                        }
+                    }
+                }
+            });
+
+            if (score >= 10) {
+                gameRunning = false;
+                victory();
+            }
+            if (timeLeft <= 0 || score < 0) {
+                defeat(); // 调用失败函数
+            }
+        }
+        
+        function defeat() {
+            clearInterval(timerInterval); // 清除倒数计时器
+            gameRunning = false;
+            gameOverElement.style.display = 'block';
+            gameOverElement.style.backgroundColor = 'rgba(255, 0, 0, 0.7)'; // 将失败画面背景设为红色
+            finalScoreElement.textContent = 'U Lose！score: ' + score;
+        }
+        function victory() {
+            clearInterval(timerInterval); // 清除倒數計時器
+            gameRunning = false;
+            gameOverElement.style.display = 'block';
+            gameOverElement.style.backgroundColor = 'rgba(0, 255, 0, 0.7)'; // 將勝利畫面背景設為綠色
+            finalScoreElement.textContent = 'U Win! score: ' + score;
+        }
+
+        function gameOver() {
+            clearInterval(timerInterval); // 清除倒數計時器
+            gameRunning = false;
+            gameOverElement.style.display = 'block';
+            finalScoreElement.textContent = score;
+        }
+
+        function restartGame() {
+            location.reload(); // 重新加載頁面重新開始遊戲
+        }
+
+        // 監聽鍵盤事件控制玩家移動
+        document.addEventListener('keydown', function(event) {
+            if (gameRunning) {
+                if (event.key === 'ArrowLeft' && playerX > 0) {
+                    playerX -= 50; // 控制玩家左移速度
+                } else if (event.key === 'ArrowRight' && playerX < window.innerWidth - player.clientWidth) {
+                    playerX += 50; // 控制玩家右移速度
+                } else if (event.key === 'ArrowUp' && playerY > 0) {
+                    playerY -= 50; // 控制玩家上移速度
+                } else if (event.key === 'ArrowDown' && playerY < window.innerHeight - player.clientHeight) {
+                    playerY += 50; // 控制玩家下移速度
+                }
+
+                player.style.left = playerX + 'px';
+                player.style.top = playerY + 'px';
+            }
+        });
+
+        // 遊戲循環
+        setInterval(updateObstacles, 10); // 控制障礙物下降速度
+        setInterval(createObstacle, 1000); // 隨機增加污染物的間隔
+        setInterval(createOxygen, 100); // 隨機增加氧氣泡泡的間隔
+        const timerInterval = setInterval(updateTimer, 1000); // 設定倒數計時器
+        setInterval(updateOxygen, 5); // 控制氧氣泡泡上升速度
+
+        function updateTimer() {
+            if (gameRunning) {
+                timeLeft--;
+                timeLeftElement.textContent = `time: ${timeLeft}`;
+
+                if (timeLeft <= 0 || score < 0) {
+                    gameOver();
+                }
+            }
+        }
+    </script>
+</body>
+</html>
